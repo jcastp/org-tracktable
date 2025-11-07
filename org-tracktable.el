@@ -4,7 +4,7 @@
 ;; URL: https://github.com/tty-tourist/org-tracktable
 ;; Created: 2015-11-03
 ;; Keywords: org, writing
-;; Package-Requires: ((emacs "24")(cl-lib "0.5"))
+;; Package-Requires: ((emacs "24")(cl-lib "0.5")(org-context "0.1"))
 ;; Version: 0.1
 
 ;; This file is not part of GNU Emacs.
@@ -44,6 +44,12 @@
 ;; - org-tracktable-table-name: The name given to the table inserted by
 ;;   org-tracktable-insert-table.
 
+;; Word counting behavior:
+;; This package uses `org-context-count-words' from org-context.el for word
+;; counting. Words are counted while ignoring comments, drawers, headings,
+;; properties, tables, blocks, and content under headings with tags specified
+;; in `org-context-ignore-tags' (customizable in org-context.el).
+
 ;; For additional info on use and customization, see the README in the
 ;; github repo.
 
@@ -58,6 +64,7 @@
 (require 'org)
 (require 'cl-lib)
 (require 'org-table)
+(require 'org-context)
 
 (defcustom org-tracktable-day-delay 5
   "Hours after midnight that are considered part of the previuos day.
@@ -77,76 +84,6 @@ If you want to change this variable, it's recommended to do it before
 inserting the table, to ensure consistency.  The default name is
 'tracktable'."
   :type 'string :group 'convenience)
-
-(defcustom org-tracktable-ignore-blocks '("src" "drawer" "comment")
-  "A list of strings containing names of blocks to ignore.
-See `org-in-block-p' for more detail."
-  :type '(repeat string) :group 'convenience)
-
-(defcustom org-tracktable-ignore-tags '("noexport")
-  "A list of tags to ignore when counting words.
-Content under headings with any of these tags will be excluded from word count.
-Common values might include \"noexport\", \"ignore\", or \"nowc\"."
-  :type '(repeat string) :group 'convenience)
-
-;; Helper functions for word counting
-
-(defun org-in-commented-line ()
-  "Return non-nil if point is in a commented line."
-  (save-excursion
-    (beginning-of-line)
-    (looking-at-p "^[ \t]*#")))
-
-(defun org-in-drawer-p ()
-  "Return non-nil if point is in an Org mode drawer."
-  (save-excursion
-    (beginning-of-line)
-    (looking-at-p "^[ \t]*:[a-zA-Z]+:")))
-
-(defun org-in-heading-p ()
-  "Return non-nil if point is in an Org mode heading."
-  (save-excursion
-    (beginning-of-line)
-    (looking-at-p "^*")))
-
-(defun org-at-property-p ()
-  "Return non-nil if point is at an Org mode property."
-  (save-excursion
-    (beginning-of-line)
-    (looking-at-p "^[ \t]*:[a-zA-Z0-9_-]+:")))
-
-(defun org-in-block-p ()
-  "Return non-nil if point is inside an Org mode #+BEGIN...#+END block.
-Checks for any block type (SRC, EXAMPLE, QUOTE, EXPORT, etc.)."
-  (save-excursion
-    (let ((current-line (line-number-at-pos)))
-      ;; Search backward for opening #+BEGIN_
-      (when (re-search-backward "^[ \t]*#\\+BEGIN_" nil t)
-        (let ((begin-line (line-number-at-pos)))
-          ;; Search forward for closing #+END_
-          (when (re-search-forward "^[ \t]*#\\+END_" nil t)
-            (let ((end-line (line-number-at-pos)))
-              ;; Return t if current line is between the markers
-              (and (>= current-line begin-line)
-                   (<= current-line end-line)))))))))
-
-(defun org-under-heading-with-tag-p (tags-to-ignore)
-  "Return non-nil if point is under a heading that has any tag from TAGS-TO-IGNORE.
-TAGS-TO-IGNORE should be a list of strings like (\"noexport\" \"ignore\" \"nowc\").
-Returns nil if point is before the first heading or not under a tagged heading."
-  (when tags-to-ignore
-    (save-excursion
-      ;; Try to find the current heading, return nil if before first heading
-      (condition-case nil
-          (when (org-back-to-heading t)
-            (let ((heading-tags (org-get-tags)))
-              ;; Check if any of the heading tags match our ignore list
-              (when heading-tags
-                (cl-some (lambda (tag)
-                           (member tag tags-to-ignore))
-                         heading-tags))))
-        ;; Catch the error when before first headline and return nil
-        (error nil)))))
 
 (defun org-tracktable-tracktable-exists-p ()
   "Check if the 'tracktable' exists in buffer."
@@ -172,7 +109,7 @@ Returns nil if point is before the first heading or not under a tagged heading."
   "Calculate words written today.
 It does this by substracting last entry that isn't from today from
 current word count."
-  (let ((current-wc (org-tracktable-word-count (point-min) (point-max)))
+  (let ((current-wc (org-context-count-words (point-min) (point-max) t t t t t t org-context-ignore-tags))
         (last-entry (org-table-get-remote-range org-tracktable-table-name "@>$4" ))
         (second-last-entry (org-table-get-remote-range org-tracktable-table-name "@>>$4" )))
     (if (org-tracktable-last-entry-today-p)
@@ -182,7 +119,7 @@ current word count."
 (defun org-tracktable-current-count ()
   "Reports total number of words in the buffer.
 This function is used in the table formula."
-   (let ((wc (org-tracktable-word-count (point-min) (point-max))))
+   (let ((wc (org-context-count-words (point-min) (point-max) t t t t t t org-context-ignore-tags)))
      (format "%d" wc)))
 
 (defun org-tracktable-stamp ()
@@ -222,7 +159,7 @@ If `org-tracktable-daily-goal' is set to more than 0, show % of daily goal."
        (list (region-beginning) (region-end))
      (list (point-min) (point-max))))
   (message "%s" (concat (format "%d words in %s. "
-                   (org-tracktable-word-count beg end)
+                   (org-context-count-words beg end t t t t t t org-context-ignore-tags)
                    (if (use-region-p) "region" "buffer"))
                    (when (org-tracktable-tracktable-exists-p)
                        (format "%d words written today. " (org-tracktable-written-today)))
@@ -259,24 +196,6 @@ when you're done writing for the day."
            (org-table-recalculate)
            (message "New entry added. Comments go here. Go back with C-c &."))))
     (message "Tabel '%s' doesn't exist." org-tracktable-table-name)))
-
-(defun org-tracktable-word-count (beg end)
-  "Count words between positions BEG and END.
-Ignores: heading lines, comments, drawers, properties, blocks,
-and content under headings with tags specified in `org-tracktable-ignore-tags'."
-  (let ((word-count 0))
-    (save-excursion
-      (goto-char beg)
-      (while (re-search-forward "\\w+" end t)
-        (unless (or (org-in-commented-line)
-                    (org-in-drawer-p)
-                    (org-in-heading-p)
-                    (org-at-property-p)
-                    ;; this could be not very good if we use the quote block in a book
-                    (org-in-block-p)
-                    (org-under-heading-with-tag-p org-tracktable-ignore-tags))
-          (setq word-count (1+ word-count)))))
-    word-count))
 
 (provide 'org-tracktable)
 ;;; org-tracktable.el ends here

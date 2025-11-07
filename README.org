@@ -2,13 +2,19 @@
 
 This is my personal fork of the org-tracktable repository.
 The main changes are:
-- modified the word count function (=org-tracktable-word-count=) that now ignores:
-  - org comment lines (=org-in-commented-line=)
-  - org drawers (=org-in-drawer-p=)
-  - org headings (=org-in-heading-p=)
-  - org properties (=org-at-property-p=)
-  - org blocks (=org-in-block-p=)
-  - ignore the text in headings with particular tags, that can be defined by the user (=org-under-heading-with-tag-p=)
+- Separated the logic into two files:
+  - =org-context-extended.el=
+    - Contains function to count words in org files, =org-context-count-words=, configurable to ignore:
+      - org comment lines
+      - org drawers
+      - org headings
+      - org properties
+      - org blocks: code, quote, etc
+      - org tables
+      - ignore the text in headings with particular tags, that can be defined by the user
+  - =org-tracktable.el=
+    - Removed all the helper functions for ignoring org features, as they are now in the =org-context-extended.el= file.
+    - The word counting function is also located in =org-context-extended.el=.
 
 =org-tracktable= is an emacs/org-mode package for tracking your writing progress in an org-table.
 
