@@ -201,5 +201,5 @@ tables, blocks, and content under tags specified in `org-context-ignore-tags')."
       (message "Word count: %d" word-count))
     word-count))
 
-(provide 'org-context)
+(provide 'org-context-extended)
 ;;; org-context-extended.el ends here
