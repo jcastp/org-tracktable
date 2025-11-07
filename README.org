@@ -23,7 +23,7 @@ In the spirit of org-mode, the package aims to keep everything in plain view and
 
 The package is useful when writing the first draft of something, not so much in the editing and rewriting phases where, alas, hard work is seldom reflected in the word count.
 
-=org-tracktable= is inspired by [[https://github.com/dato/org-wc/blob/master/org-wc.el][org-wc.el]], [[https://github.com/noctuid/chronicler][chronicler.el]], and [tty-tourist's org-tracktable](https://github.com/tty-tourist/org-tracktable).
+=org-tracktable= is inspired by [[https://github.com/dato/org-wc/blob/master/org-wc.el][org-wc.el]], [[https://github.com/noctuid/chronicler][chronicler.el]], and [[https://github.com/tty-tourist/org-tracktable][tty-tourist org-tracktable]].
 
 ** Installation
 Clone this repo or download =org-tracktable.el= to an appropriate location like =~/.emacs.d/lisp/=.
