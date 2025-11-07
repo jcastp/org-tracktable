@@ -147,11 +147,11 @@ This function is used in the table formula."
       (progn
         (unless (org-tracktable-current-line-empty-p) (newline))
         (insert (format "#+NAME: %s
-|---+------+-----+-----+-------+---------|
-| ! | date | beg | end | total | comment |
-|---+------+-----+-----+-------+---------|
-|   |      |     |     |       |         |
-|---+------+-----+-----+-------+---------|
+|---+------+-------+-----+---------------+---------|
+| * | date | start | end | total (today) | comment |
+|---+------+-------+-----+---------------+---------|
+|   |      |       |     |               |         |
+|---+------+-------+-----+---------------+---------|
 #+TBLFM: @2$2=initial count::$2='(org-tracktable-stamp)::@2$3=0::$3=(@-1$4)::$4='(org-tracktable-current-count)::$5=$4-$3"
                         org-tracktable-table-name))
         (previous-logical-line)
